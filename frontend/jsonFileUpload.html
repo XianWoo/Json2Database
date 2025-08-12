@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to MDB Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-2xl w-full">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4 text-center">JSON to MDB Converter</h1>
+        <p class="text-gray-600 mb-6 text-center">
+            Upload your `Organizations.json` file. This interface will confirm the data is readable.
+            To generate the final `.mdb` file, you will need to use the provided Python script on a local Windows machine.
+        </p>
+
+        <!-- File Upload Area -->
+        <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-colors duration-200 hover:border-blue-500 cursor-pointer" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" class="hidden" accept=".json" onchange="handleFileSelect(event)">
+            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.232-3.232a2 2 0 00-2.712-.19L21.499 17l-4.14 4.14a2 2 0 00-2.828 0L8 27.656m20-4.656h8m-8-8v8m0-8a4 4 0 00-4-4H12a4 4 0 00-4 4v12a4 4 0 004 4h12m16-16a4 4 0 00-4-4H20a4 4 0 00-4 4v16a4 4 0 004 4h16a4 4 0 004-4V8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <p class="mt-2 text-sm text-gray-600"><span class="font-medium text-blue-600">Click to upload</span> or drag and drop</p>
+            <p id="fileName" class="text-xs text-gray-500 mt-1">JSON files only</p>
+        </div>
+
+        <!-- Conversion Button -->
+        <button id="convertBtn" class="mt-6 w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 opacity-50 cursor-not-allowed" disabled>
+            Parse JSON
+        </button>
+
+        <!-- Results Display Area -->
+        <div id="results" class="mt-6 hidden">
+            <h2 class="text-xl font-semibold mb-2">Parsed Data Summary</h2>
+            <div id="summary" class="bg-gray-100 p-4 rounded-lg text-sm text-gray-800 space-y-2"></div>
+        </div>
+
+        <!-- Modal for alerts -->
+        <div id="modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full text-center">
+                <p id="modalMessage" class="text-lg font-medium text-gray-800 mb-4"></p>
+                <button onclick="closeModal()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileNameEl = document.getElementById('fileName');
+        const convertBtn = document.getElementById('convertBtn');
+        const resultsEl = document.getElementById('results');
+        const summaryEl = document.getElementById('summary');
+        const modal = document.getElementById('modal');
+        const modalMessage = document.getElementById('modalMessage');
+
+        function showModal(message) {
+            modalMessage.textContent = message;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                fileNameEl.textContent = file.name;
+                convertBtn.disabled = false;
+                convertBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                convertBtn.classList.add('hover:scale-105', 'hover:shadow-2xl');
+
+                // Add click listener to the button
+                convertBtn.onclick = () => parseAndDisplayJSON(file);
+
+            } else {
+                fileNameEl.textContent = 'JSON files only';
+                convertBtn.disabled = true;
+                convertBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                convertBtn.classList.remove('hover:scale-105', 'hover:shadow-2xl');
+                resultsEl.classList.add('hidden');
+            }
+        }
+
+        function parseAndDisplayJSON(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+
+                    // Display a summary of the parsed data
+                    summaryEl.innerHTML = `
+                        <p><strong>Status:</strong> JSON file loaded successfully!</p>
+                        <p><strong>Number of Organizations:</strong> ${jsonData.length}</p>
+                        <p><strong>Next Step:</strong> Download the Python script and run it on a Windows machine to create the .mdb file.</p>
+                    `;
+                    resultsEl.classList.remove('hidden');
+
+                } catch (error) {
+                    showModal("Error: Could not parse the JSON file. Please ensure it's a valid JSON format.");
+                    console.error("Failed to parse JSON file:", error);
+                }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
